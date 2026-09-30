@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "deck": {
+    "slug": "ielts",
+    "name": "雅思核心词汇",
+    "description": "ECDICT ielts 词表 + kajweb 雅思书交叉 + LLM 判类补漏，经频率分层过滤",
+    "exam": "IELTS",
+    "defaultDailyNewLimit": 10,
+    "order": 1
+  },
+  "wordCount": 6321,
+  "generator": {
+    "ecdictVersion": "1.0.28",
+    "wordlistSources": [
+      "ecdict:tag:ielts",
+      "kajweb-dict:IELTS_2",
+      "llm:judged"
+    ],
+    "llmModel": "deepseek-v4-1-flash",
+    "generatedAt": "2026-09-30T15:12:21.475Z"
+  },
+  "config": {
+    "minBncRank": 3000,
+    "explanationCoverage": 1
+  },
+  "files": {
+    "words.json": "sha256:8bd1bc5d59d9070d79b87850fa29b1179fedf0daaa28bbb9c8e4d716252bc5c8",
+    "relations.json": "sha256:1f361fc7c46ccfb9cd207895e8015fbcddbe2bfcb63d31b5f2983cf12860ae30",
+    "explanations.json": "sha256:051c1e39cf2036798771a4f6839a159f4dbe995222426a291eaffc6acfe54d46"
+  }
+}
