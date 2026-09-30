@@ -5,6 +5,7 @@
  */
 import { eq } from "drizzle-orm";
 
+import { auth, authEnabled } from "@/auth";
 import { db } from "./db";
 import { ensureSchema } from "./ensure-schema";
 import { users } from "./schema";
@@ -30,16 +31,22 @@ async function getDevUser(): Promise<SessionUser> {
 
 /**
  * 获取当前会话用户；未登录返回 null。
- * 本地开发（无 AUTH_SECRET 且 NODE_ENV=development）自动返回 dev 用户，
- * 生产环境绝不走此分支——middleware 强制 OAuth（接 GitHub 凭据后启用 auth-github.ts）。
+ * - 生产（AUTH_GITHUB_ID/SECRET 齐备）：Auth.js session → users 表取 userId
+ * - 本地开发（无 AUTH_SECRET 且 NODE_ENV=development）：自动 dev 用户
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
+  await ensureSchema();
   const isDev = process.env.NODE_ENV === "development" && !process.env.AUTH_SECRET;
+  if (!isDev && authEnabled) {
+    const session = await auth();
+    const login = session?.user?.name;
+    if (!login) return null;
+    // GitHub username → users 表（signIn 回调已建档）
+    const rows = await db.select().from(users).where(eq(users.githubLogin, login.toLowerCase()));
+    if (rows.length === 0) return null;
+    const u = rows[0];
+    return { id: u.id, githubLogin: u.githubLogin, name: u.name, avatarUrl: u.avatarUrl };
+  }
   if (isDev) return getDevUser();
-
-  // 生产：Auth.js session（凭据配置后接入）
-  // const session = await auth();
-  // if (!session?.user) return null;
-  // → upsert users by githubId，返回 SessionUser
   return null;
 }
