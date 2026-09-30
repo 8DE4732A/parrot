@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          # 构建期不访问数据库即可通过；M2 起按需注入
+          DATABASE_URL: "postgres://placeholder"
+      # 素材包校验（M2 起生效；materials/ 尚无内容时脚本允许空）
+      - run: npm run material:validate
+      - name: 引擎纯净性检查：src/ 禁止出现素材 slug 字面量（详设 §1）
+        run: |
+          if grep -riE "'(ielts|cet6|toefl)'" src/; then
+            echo "::error::src/ 中出现素材 slug 字面量，违反程序与素材分离原则"
+            exit 1
+          fi
