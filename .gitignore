@@ -45,3 +45,6 @@ next-env.d.ts
 scripts/.work/
 materials/ielts/explanations.json
 materials/ielts/.explanations-failed.json
+
+# 本地 PGLite 数据目录
+.pglite/
