@@ -24,14 +24,14 @@ async function main() {
   const devMode = process.argv.includes("--dev");
   // 本地（无 DATABASE_URL）：发布到 PGLite 开发库；生产：Neon
   // （与 src/lib/db.ts 同一套 driver 切换策略）
-  // 类型基准：以 PGLite driver 为准，Neon driver 的查询 API 同构
-  const baseDb = drizzle(new PGlite(":memory:"));
-  let db: typeof baseDb;
+  // 类型基准：以 PGLite driver 的返回类型为准，Neon driver 的查询 API 同构
+  type BaseDb = ReturnType<typeof drizzle>;
+  let db: BaseDb;
   const target: string = process.env.DATABASE_URL ? "Neon" : "PGLite(本地)";
   if (process.env.DATABASE_URL) {
     const { drizzle: drizzleNeon } = await import("drizzle-orm/neon-http");
     const { neon } = await import("@neondatabase/serverless");
-    db = drizzleNeon(neon(process.env.DATABASE_URL)) as unknown as typeof baseDb;
+    db = drizzleNeon(neon(process.env.DATABASE_URL)) as unknown as BaseDb;
   } else {
     const pg = new PGlite(".pglite");
     // 本地库首次发布时建表（exec 支持多语句 DDL）

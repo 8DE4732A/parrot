@@ -94,9 +94,12 @@ export default function TodayPage() {
           ))}
       </div>
 
-      <Link href="/onboarding" className="mt-8 block text-center text-xs text-neutral-400 underline">
-        词书设置
-      </Link>
+      <nav className="mt-10 grid grid-cols-4 gap-2 border-t border-neutral-100 pt-4 text-center text-xs text-neutral-500">
+        <Link href="/today" className="font-medium text-teal-700">今日</Link>
+        <Link href="/quiz">测验</Link>
+        <Link href="/stats">统计</Link>
+        <Link href="/settings">设置</Link>
+      </nav>
     </main>
   );
 }

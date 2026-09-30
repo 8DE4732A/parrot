@@ -52,7 +52,7 @@ async function resolveLlmConfig(userId: number): Promise<LlmConfig> {
     | { provider: string; baseUrl: string; model: string; apiKeyEnc?: string }
     | undefined;
   if (llm?.baseUrl && llm?.model) {
-    let apiKey = llm.apiKeyEnc ?? "";
+    const apiKey = llm.apiKeyEnc ?? "";
     if (apiKey) {
       // BYOK key 解密（AES-256-GCM，密钥派生自 AUTH_SECRET）——M6 接入加密存储后启用
       // 一期 key 由用户在本地 settings 明文存 PGLite（个人设备），生产 Neon 时强制加密
