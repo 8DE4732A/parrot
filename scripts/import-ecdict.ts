@@ -42,6 +42,11 @@ function main() {
   let dropped = 0;
 
   for (const w of words) {
+    // 短语（含空格）与全大写缩写词不在背单词范围（详设 Step 2 清洗；打包规则 3 同源）
+    if (w.includes(" ") || (w === w.toUpperCase() && w.length > 1)) {
+      dropped++;
+      continue;
+    }
     const row = rows.get(w.toLowerCase());
     const source = wordlist[w] as WordEntry["source"];
     if (!row || !row.translation) {
