@@ -218,13 +218,14 @@ export default function StudyPage() {
               </Section>
             </>
           ) : (
-            /* 讲解缺失骨架：BYOK 兜底生成（M4 后续接入），先显示骨架屏 */
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-lg bg-neutral-100" />
-              ))}
-              <p className="text-xs text-neutral-400">AI 讲解生成中…</p>
-            </div>
+            /* 讲解缺失骨架：触发服务端兜底生成（§7.6），成功后本地替换 */
+            <ExplanationSkeleton wordId={current!.wordId} onReady={(exp) => {
+              setQueue((q) =>
+                q?.map((item) =>
+                  item.wordId === current!.wordId ? { ...item, explanation: exp, explanationStatus: "ready" } : item
+                ) ?? q
+              );
+            }} />
           )}
         </div>
       )}
@@ -263,5 +264,37 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       </h2>
       {children}
     </section>
+  );
+}
+
+/** 讲解缺失：显示骨架并触发兜底生成（客户端直连失败自动降级服务端，M4 先走服务端代理） */
+function ExplanationSkeleton({
+  wordId,
+  onReady,
+}: {
+  wordId: number;
+  onReady: (exp: ExplanationContent) => void;
+}) {
+  const [error, setError] = useState(false);
+  const tried = useRef(false);
+
+  useEffect(() => {
+    if (tried.current) return;
+    tried.current = true;
+    fetch(`/api/explanations/${wordId}/generate`, { method: "POST" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("generate failed"))))
+      .then((d) => onReady(d.explanation))
+      .catch(() => setError(true));
+  }, [wordId, onReady]);
+
+  return (
+    <div className="space-y-3">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="h-16 animate-pulse rounded-lg bg-neutral-100" />
+      ))}
+      <p className="text-xs text-neutral-400">
+        {error ? "讲解生成失败，稍后再试" : "AI 老师正在备课…"}
+      </p>
+    </div>
   );
 }
