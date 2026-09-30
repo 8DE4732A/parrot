@@ -9,6 +9,8 @@
  * - 外部权威词表（kajweb 雅思书）：编辑精选，全量并入（含中频词如 abandon）
  * - 漏词挖掘：无 tag、bnc ∈ (minBncRank, 15000]、非专名 → LLM 批量判类
  */
+import "./lib/env";
+
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";

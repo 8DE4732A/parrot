@@ -5,6 +5,8 @@
  * - 用户域表零接触
  * 前置：DATABASE_URL 指向目标库；素材包已通过 validatePackage
  */
+import "./lib/env";
+
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { drizzle } from "drizzle-orm/pglite";
