@@ -6,7 +6,7 @@
 import { and, asc, eq, inArray, ne, lte } from "drizzle-orm";
 
 import { db } from "./db";
-import { cardProgress, deckWords, decks, userDecks, wordExplanations, words } from "./schema";
+import { cardProgress, deckWords, userDecks, wordExplanations, words } from "./schema";
 
 export interface QueueWord {
   wordId: number;
