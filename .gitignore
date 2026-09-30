@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 流水线中间产物与原始数据（详设 §2.1）
+scripts/.work/
+materials/ielts/explanations.json
+materials/ielts/.explanations-failed.json

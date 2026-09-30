@@ -1,10 +1,8 @@
-/**
- * 素材包校验入口（详设 §2.6）
- * M1：扫描 materials/ 下所有包含 manifest.json 的目录，无素材包时直接通过。
- * M2：接入 materials/schema 的 Zod 全量校验（schema/引用完整性/覆盖率/sha256）。
- */
-import { existsSync, readdirSync, statSync } from "node:fs";
+/** 素材包校验 CLI（package.json 的 material:validate） */
+import { readdirSync, statSync, existsSync } from "node:fs";
 import path from "node:path";
+
+import { validatePackage } from "../materials/schema";
 
 const MATERIALS_DIR = path.resolve(__dirname, "..", "materials");
 
@@ -17,12 +15,22 @@ function main() {
     const dir = path.join(MATERIALS_DIR, name);
     return statSync(dir).isDirectory() && existsSync(path.join(dir, "manifest.json"));
   });
-  if (packages.length === 0) {
-    console.log("material:validate — 无素材包，通过");
-    return;
+
+  let failed = false;
+  for (const slug of packages) {
+    const issues = validatePackage(path.join(MATERIALS_DIR, slug));
+    if (issues.length === 0) {
+      console.log(`✅ ${slug}: 校验通过`);
+    } else {
+      failed = true;
+      console.error(`❌ ${slug}: ${issues.length} 个问题`);
+      for (const issue of issues.slice(0, 20))
+        console.error(`   [规则${issue.rule}] ${issue.message}`);
+      if (issues.length > 20) console.error(`   ... 共 ${issues.length} 个`);
+    }
   }
-  // M2: 在此调用 validatePackage(dir) 逐包校验
-  console.log(`material:validate — 发现 ${packages.length} 个素材包，M2 接入全量校验，暂通过`);
+  if (failed) process.exit(1);
+  console.log(`material:validate — ${packages.length} 个素材包全部通过`);
 }
 
 main();
