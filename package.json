@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.60",
+    "@electric-sql/pglite": "^0.5.8",
     "@neondatabase/serverless": "^1.1.0",
     "ai": "^7.0.123",
     "drizzle-orm": "^0.45.3",
