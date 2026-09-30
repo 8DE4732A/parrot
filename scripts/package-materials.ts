@@ -3,6 +3,8 @@
  * 汇集四文件 → 计算 sha256 写入 manifest → 全量校验。
  * 前置条件：explanations.json 覆盖率 100%（规则 5 门槛）。
  */
+import "./lib/env";
+
 import { existsSync, readFileSync, statSync, writeFileSync, rmSync } from "node:fs";
 import path from "node:path";
 

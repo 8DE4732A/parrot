@@ -10,6 +10,8 @@
  *
  * 用法：npx tsx scripts/generate-explanations.ts [--limit N]
  */
+import "./lib/env";
+
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
