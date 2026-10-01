@@ -42,15 +42,16 @@ function main() {
   let dropped = 0;
 
   for (const w of words) {
-    // 短语（含空格）与全大写缩写词不在背单词范围（详设 Step 2 清洗；打包规则 3 同源）
-    if (w.includes(" ") || (w === w.toUpperCase() && w.length > 1)) {
-      dropped++;
-      continue;
-    }
     const row = rows.get(w.toLowerCase());
     const source = wordlist[w] as WordEntry["source"];
     if (!row || !row.translation) {
       // 词表中的词 ECDICT 无词条或无释义（外部词表词理论上都有）
+      dropped++;
+      continue;
+    }
+    // 短语（含空格）与全大写缩写词不在背单词范围——用 ECDICT 规范大小写判断
+    // （wordlist key 可能是小写，w === w.toUpperCase() 判断不到 PETS/CD-ROM 这类词）
+    if (row.word.includes(" ") || (row.word === row.word.toUpperCase() && row.word.length > 1)) {
       dropped++;
       continue;
     }
