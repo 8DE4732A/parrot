@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { speakWord } from "@/lib/speak";
 
 interface ExplanationContent {
   etymology: { parts: { part: string; type: string; meaning: string }[]; story: string };
@@ -32,11 +33,7 @@ const GRADES: { g: Grade; label: string }[] = [
 
 function SpeakButton({ word }: { word: string }) {
   const speak = useCallback(() => {
-    const u = new SpeechSynthesisUtterance(word);
-    u.lang = "en-GB";
-    u.rate = 0.9;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+    speakWord(word);
   }, [word]);
   return (
     <button

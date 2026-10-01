@@ -18,13 +18,7 @@ interface Result {
   hint?: string;
 }
 
-function speak(word: string) {
-  const u = new SpeechSynthesisUtterance(word);
-  u.lang = "en-GB";
-  u.rate = 0.9;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-}
+import { speakWord as speak } from "@/lib/speak";
 
 export default function QuizPage() {
   const [questions, setQuestions] = useState<Question[] | null>(null);
