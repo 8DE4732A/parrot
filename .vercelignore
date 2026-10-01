@@ -1,0 +1,6 @@
+# Vercel 构建只需要应用代码；素材流水线原始数据与本地库不上传
+scripts/.work/
+.pglite/
+:memory:/
+.env*
+docs/

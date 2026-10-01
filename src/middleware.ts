@@ -1,27 +1,32 @@
 /**
- * 全站鉴权中间件（详设 §9）
- * - 有 Auth.js 凭据：校验 session，未登录 API 401、页面 302 → 登录
- * - 本地开发（无凭据）：放行（lib/auth.ts 的 dev 会话机制兜底）
+ * 全站鉴权中间件（详设 §9）——Auth.js v5 标准写法
+ * - 有凭据时：auth() wrapper 解析 session（与 API 同一套 JWT 逻辑）
+ * - 未登录：API 401、页面 302 → 登录页
+ * - 本地开发（无凭据）：放行（lib/auth.ts 的 dev 会话兜底）
  */
-import { NextResponse, type NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import NextAuth from "next-auth";
+import GitHub from "next-auth/providers/github";
+import { NextResponse } from "next/server";
 
-export async function middleware(req: NextRequest) {
-  const hasCredentials = !!process.env.AUTH_GITHUB_ID && !!process.env.AUTH_GITHUB_SECRET;
-  if (!hasCredentials) return NextResponse.next(); // 本地开发
+const hasCredentials =
+  !!process.env.AUTH_GITHUB_ID && !!process.env.AUTH_GITHUB_SECRET && !!process.env.AUTH_SECRET;
 
+const { auth } = NextAuth({
+  providers: hasCredentials ? [GitHub] : [],
+  session: { strategy: "jwt" },
+  trustHost: true,
+});
+
+export default auth((req) => {
   const isApi = req.nextUrl.pathname.startsWith("/api/");
   const isAuthRoute = req.nextUrl.pathname.startsWith("/api/auth/");
-  if (isAuthRoute) return NextResponse.next();
-
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
-  if (token) return NextResponse.next();
+  if (isAuthRoute || req.auth) return NextResponse.next();
 
   if (isApi) {
     return NextResponse.json({ error: { code: "UNAUTHORIZED" } }, { status: 401 });
   }
   return NextResponse.redirect(new URL("/api/auth/signin", req.url));
-}
+});
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|icons|manifest.json|sw.js|favicon.ico).*)"],
