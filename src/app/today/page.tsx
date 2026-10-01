@@ -17,6 +17,8 @@ export default function TodayPage() {
   const [decks, setDecks] = useState<DeckInfo[] | null>(null);
   const [queue, setQueue] = useState<{ reviews: unknown[]; news: unknown[] } | null>(null);
 
+  const learnedCount = decks?.filter((d) => d.active).reduce((s, d) => s + d.learnedCount, 0) ?? 0;
+
   useEffect(() => {
     fetch("/api/decks")
       .then((r) => r.json())
@@ -75,8 +77,17 @@ export default function TodayPage() {
         onClick={() => router.push("/study")}
         className="mt-6 w-full rounded-xl bg-teal-700 py-4 text-lg font-semibold text-white disabled:bg-neutral-200 disabled:text-neutral-400"
       >
-        {total > 0 ? `开始学习（${total} 张卡片）` : "今日已完成 🎉"}
+        {total > 0 ? `开始学习（${total} 张卡片）` : "今日额度已完成 🎉"}
       </button>
+
+      {total === 0 && learnedCount > 0 && (
+        <button
+          onClick={() => router.push("/study?mode=free")}
+          className="mt-3 w-full rounded-xl border-2 border-teal-700 py-3 font-medium text-teal-700"
+        >
+          自由复习 · 记得最浅的 {Math.min(learnedCount, 20)} 个词
+        </button>
+      )}
 
       <div className="mt-8 space-y-2">
         {decks
