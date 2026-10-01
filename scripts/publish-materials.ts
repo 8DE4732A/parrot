@@ -126,6 +126,7 @@ async function main() {
         chunk.map((w) => ({
           word: w.word,
           phonetic: w.phonetic,
+          phoneticUs: w.phoneticUs,
           translation: w.translation,
           definition: w.definition,
           pos: w.pos,
@@ -145,6 +146,7 @@ async function main() {
       .update(words)
       .set({
         phonetic: w.phonetic,
+        phoneticUs: w.phoneticUs,
         translation: w.translation,
         definition: w.definition,
         pos: w.pos,

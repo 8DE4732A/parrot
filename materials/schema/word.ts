@@ -18,6 +18,7 @@ export const WordEntrySchema = z.object({
     .min(1)
     .regex(/^[a-zA-Z][a-zA-Z'-]*$/, "必须以字母开头，仅含字母/连字符/撇号"),
   phonetic: z.string().optional(),
+  phoneticUs: z.string().optional(), // 美式音标（kajweb 词书来源）
   translation: z.string().min(1, "中文释义必填"),
   definition: z.string().optional(),
   pos: z.string().optional(),

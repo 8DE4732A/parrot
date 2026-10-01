@@ -30,6 +30,7 @@ export const words = pgTable("words", {
   id: serial("id").primaryKey(),
   word: text("word").notNull().unique(),
   phonetic: text("phonetic"),
+  phoneticUs: text("phonetic_us"),
   translation: text("translation").notNull(),
   definition: text("definition"),
   pos: text("pos"),

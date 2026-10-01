@@ -17,6 +17,7 @@ interface QueueItem {
   wordId: number;
   word: string;
   phonetic: string | null;
+  phoneticUs: string | null;
   translation: string;
   card: { state: number } | null;
   explanation: ExplanationContent | null;
@@ -31,18 +32,38 @@ const GRADES: { g: Grade; label: string }[] = [
   { g: 4, label: "简单" },
 ];
 
-function SpeakButton({ word }: { word: string }) {
-  const speak = useCallback(() => {
-    speakWord(word);
-  }, [word]);
+/** 双口音发音：有美音数据时显示 UK/US 切换，否则单按钮 */
+function SpeakButton({ word, phoneticUs }: { word: string; phoneticUs?: string | null }) {
+  const [accent, setAccent] = useState<"uk" | "us">("uk");
+  const play = useCallback(() => {
+    speakWord(word, accent);
+  }, [word, accent]);
+  const hasUs = !!phoneticUs;
+
+  if (!hasUs) {
+    return (
+      <button
+        onClick={play}
+        aria-label="发音"
+        className="rounded-full px-2 py-1 text-xl hover:bg-neutral-100"
+      >
+        🔊
+      </button>
+    );
+  }
   return (
-    <button
-      onClick={speak}
-      aria-label="发音"
-      className="rounded-full px-2 py-1 text-xl hover:bg-neutral-100"
-    >
-      🔊
-    </button>
+    <span className="inline-flex items-center gap-1">
+      <button onClick={play} aria-label={`播放${accent === "uk" ? "英式" : "美式"}发音`} className="rounded-full px-2 py-1 text-xl hover:bg-neutral-100">
+        🔊
+      </button>
+      <button
+        onClick={() => setAccent(accent === "uk" ? "us" : "uk")}
+        title="切换英美口音"
+        className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600"
+      >
+        {accent === "uk" ? "UK" : "US"}
+      </button>
+    </span>
   );
 }
 
@@ -144,7 +165,7 @@ export default function StudyPage() {
           <h1 className="text-5xl font-bold tracking-tight">{current!.word}</h1>
           <div className="flex items-center gap-2 text-neutral-500">
             {current!.phonetic && <span>/{current!.phonetic}/</span>}
-            <SpeakButton word={current!.word} />
+            <SpeakButton word={current!.word} phoneticUs={current!.phoneticUs} />
           </div>
           <button
             onClick={() => setFlipped(true)}
@@ -159,10 +180,14 @@ export default function StudyPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-3xl font-bold">{current!.word}</h1>
-              <SpeakButton word={current!.word} />
+              <SpeakButton word={current!.word} phoneticUs={current!.phoneticUs} />
             </div>
-            {current!.phonetic && (
-              <p className="text-sm text-neutral-500">/{current!.phonetic}/</p>
+            {(current!.phonetic || current!.phoneticUs) && (
+              <p className="text-sm text-neutral-500">
+                {current!.phonetic && <>UK /{current!.phonetic}/</>}
+                {current!.phonetic && current!.phoneticUs && " · "}
+                {current!.phoneticUs && <>US /{current!.phoneticUs}/</>}
+              </p>
             )}
             <p className="mt-1 text-neutral-800">{current!.translation}</p>
           </div>
