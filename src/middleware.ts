@@ -19,8 +19,7 @@ const { auth } = NextAuth({
 
 export default auth((req) => {
   const isApi = req.nextUrl.pathname.startsWith("/api/");
-  const isAuthRoute = req.nextUrl.pathname.startsWith("/api/auth/");
-  if (isAuthRoute || req.auth) return NextResponse.next();
+  if (req.auth) return NextResponse.next();
 
   if (isApi) {
     return NextResponse.json({ error: { code: "UNAUTHORIZED" } }, { status: 401 });
@@ -28,6 +27,10 @@ export default auth((req) => {
   return NextResponse.redirect(new URL("/api/auth/signin", req.url));
 });
 
+// /api/auth/* 完全交给 route handler（双重处理会导致 UnknownAction），
+// 由 route handler 的 auth() 实例（含白名单/建档回调）独占
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|icons|manifest.json|sw.js|favicon.ico).*)"],
+  matcher: [
+    "/((?!api/auth|_next/static|_next/image|icons|manifest.json|sw.js|favicon.ico).*)",
+  ],
 };
