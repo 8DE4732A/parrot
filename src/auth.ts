@@ -33,6 +33,7 @@ function allowed(logins: string | undefined): Set<string> {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 30 },
+  trustHost: true,
   callbacks: {
     async signIn({ user, profile }) {
       // 白名单校验 + users 建档（详设 §9 安全核心）
