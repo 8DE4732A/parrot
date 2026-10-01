@@ -31,6 +31,6 @@ export default auth((req) => {
 // 由 route handler 的 auth() 实例（含白名单/建档回调）独占
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|icons|manifest.json|sw.js|favicon.ico).*)",
+    "/((?!api/auth|_next/static|_next/image|icons|manifest.json|sw.js|favicon.ico|audio).*)",
   ],
 };
