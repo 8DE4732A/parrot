@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS decks (
   description text, exam text, default_daily_new_limit integer NOT NULL DEFAULT 10,
   display_order integer NOT NULL DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS words (
-  id serial PRIMARY KEY, word text NOT NULL UNIQUE, phonetic text, translation text NOT NULL,
+  id serial PRIMARY KEY, word text NOT NULL UNIQUE, phonetic text, phonetic_us text, translation text NOT NULL,
   definition text, pos text, bnc integer, frq integer, inflections jsonb, source text,
   created_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS deck_words (

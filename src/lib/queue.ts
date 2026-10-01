@@ -12,6 +12,7 @@ export interface QueueWord {
   wordId: number;
   word: string;
   phonetic: string | null;
+  phoneticUs: string | null;
   translation: string;
   card: {
     state: number;
@@ -43,6 +44,7 @@ export async function getDailyQueue(userId: number): Promise<{
       wordId: words.id,
       word: words.word,
       phonetic: words.phonetic,
+      phoneticUs: words.phoneticUs,
       translation: words.translation,
       state: cardProgress.state,
       due: cardProgress.due,
@@ -75,6 +77,7 @@ export async function getDailyQueue(userId: number): Promise<{
         wordId: words.id,
         word: words.word,
         phonetic: words.phonetic,
+        phoneticUs: words.phoneticUs,
         translation: words.translation,
       })
       .from(deckWords)
@@ -98,6 +101,7 @@ export async function getDailyQueue(userId: number): Promise<{
     const learnedSet = new Set(learned.map((l) => l.wordId));
     const fresh = rows.filter((r) => !learnedSet.has(r.wordId)).slice(0, limit);
     newsRows.push(...fresh.map((r) => ({ ...r, state: 0, due: new Date(), stability: 0, difficulty: 0, reps: 0, lapses: 0 })));
+    void 0;
   }
 
   // ---- 讲解批量取 ----
@@ -133,6 +137,7 @@ export async function getDailyQueue(userId: number): Promise<{
     wordId: r.wordId,
     word: r.word,
     phonetic: r.phonetic,
+    phoneticUs: r.phoneticUs,
     translation: r.translation,
     card: { state: r.state, due: r.due.toISOString(), stability: r.stability, difficulty: r.difficulty, reps: r.reps, lapses: r.lapses },
     explanation: r.explanation,
@@ -143,6 +148,7 @@ export async function getDailyQueue(userId: number): Promise<{
     wordId: r.wordId,
     word: r.word,
     phonetic: r.phonetic,
+    phoneticUs: r.phoneticUs,
     translation: r.translation,
     card: null,
     explanation: r.explanation,
@@ -165,6 +171,7 @@ export async function getFreeReviewQueue(
       wordId: words.id,
       word: words.word,
       phonetic: words.phonetic,
+      phoneticUs: words.phoneticUs,
       translation: words.translation,
       state: cardProgress.state,
       due: cardProgress.due,
@@ -202,6 +209,7 @@ export async function getFreeReviewQueue(
       wordId: r.wordId,
       word: r.word,
       phonetic: r.phonetic,
+      phoneticUs: r.phoneticUs,
       translation: r.translation,
       card: { state: r.state, due: r.due.toISOString(), stability: r.stability, difficulty: r.difficulty, reps: r.reps, lapses: r.lapses },
       explanation: exp?.content ?? null,

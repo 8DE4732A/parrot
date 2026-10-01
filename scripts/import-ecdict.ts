@@ -28,8 +28,19 @@ function cleanTranslation(t: string | null): string {
     .join("；");
 }
 
+/** kajweb 词书的英美双音标（word → {uk, us}），无则跳过 */
+function loadKajwebPron(): Record<string, { uk?: string; us?: string }> {
+  const f = path.join(WORK_DIR, "kajweb-pron.json");
+  try {
+    return JSON.parse(readFileSync(f, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
 function main() {
   const db = openEcdict();
+  const kajwebPron = loadKajwebPron();
   const wordlist: Record<string, string> = JSON.parse(
     readFileSync(path.join(WORK_DIR, `${DECK}-wordlist.json`), "utf-8")
   );
@@ -78,9 +89,11 @@ function main() {
     if (!phonetic) noPhonetic++;
     const bnc = row.bnc && row.bnc > 0 ? row.bnc : undefined;
     const frq = row.frq && row.frq > 0 ? row.frq : undefined;
+    const kp = kajwebPron[row.word.toLowerCase()];
     entries.push({
       word: row.word,
-      phonetic,
+      phonetic: phonetic ?? kp?.uk,
+      phoneticUs: kp?.us,
       translation,
       definition: row.definition?.trim() || undefined,
       pos: row.pos || undefined,
