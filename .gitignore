@@ -48,3 +48,6 @@ materials/ielts/.explanations-failed.json
 
 # 本地 PGLite 数据目录
 .pglite/
+
+# 防御：PGlite 误把 :memory: 当路径的产物
+:memory:/
