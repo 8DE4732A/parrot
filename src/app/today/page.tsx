@@ -80,7 +80,7 @@ export default function TodayPage() {
         {total > 0 ? `开始学习（${total} 张卡片）` : "今日额度已完成 🎉"}
       </button>
 
-      {total === 0 && learnedCount > 0 && (
+      {learnedCount > 0 && (
         <button
           onClick={() => router.push("/study?mode=free")}
           className="mt-3 w-full rounded-xl border-2 border-teal-700 py-3 font-medium text-teal-700"
