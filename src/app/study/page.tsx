@@ -57,7 +57,9 @@ export default function StudyPage() {
   const pendingGrades = useRef(0);
 
   useEffect(() => {
-    fetch("/api/queue")
+    const mode = new URLSearchParams(window.location.search).get("mode");
+    const url = mode === "free" ? "/api/queue?mode=free&limit=20" : "/api/queue";
+    fetch(url)
       .then((r) => r.json())
       .then((d) => {
         const items: QueueItem[] = [...(d.reviews ?? []), ...(d.news ?? [])];

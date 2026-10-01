@@ -151,3 +151,61 @@ export async function getDailyQueue(userId: number): Promise<{
 
   return { reviews, news };
 }
+
+/**
+ * 自由复习队列：已学词按 (到期优先 → 记忆稳定度升序) 排序。
+ * 即使没有到期卡也能主动复习。
+ */
+export async function getFreeReviewQueue(
+  userId: number,
+  limit = 20
+): Promise<QueueWord[]> {
+  const rows = await db
+    .select({
+      wordId: words.id,
+      word: words.word,
+      phonetic: words.phonetic,
+      translation: words.translation,
+      state: cardProgress.state,
+      due: cardProgress.due,
+      stability: cardProgress.stability,
+      difficulty: cardProgress.difficulty,
+      reps: cardProgress.reps,
+      lapses: cardProgress.lapses,
+    })
+    .from(cardProgress)
+    .innerJoin(words, eq(words.id, cardProgress.wordId))
+    .where(and(eq(cardProgress.userId, userId), ne(cardProgress.state, 0)))
+    .orderBy(asc(cardProgress.due), asc(cardProgress.stability))
+    .limit(limit);
+
+  const explanationMap = new Map<number, { content: unknown; status: string }>();
+  if (rows.length > 0) {
+    const exps = await db
+      .select({ wordId: wordExplanations.wordId, content: wordExplanations.content, status: wordExplanations.status })
+      .from(wordExplanations)
+      .where(
+        and(
+          eq(wordExplanations.status, "ready"),
+          inArray(
+            wordExplanations.wordId,
+            rows.map((r) => r.wordId)
+          )
+        )
+      );
+    for (const e of exps) explanationMap.set(e.wordId, { content: e.content, status: e.status });
+  }
+
+  return rows.map((r) => {
+    const exp = explanationMap.get(r.wordId);
+    return {
+      wordId: r.wordId,
+      word: r.word,
+      phonetic: r.phonetic,
+      translation: r.translation,
+      card: { state: r.state, due: r.due.toISOString(), stability: r.stability, difficulty: r.difficulty, reps: r.reps, lapses: r.lapses },
+      explanation: exp?.content ?? null,
+      explanationStatus: exp?.status ?? null,
+    };
+  });
+}
