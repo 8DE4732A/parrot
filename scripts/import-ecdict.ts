@@ -92,8 +92,8 @@ function main() {
     const kp = kajwebPron[row.word.toLowerCase()];
     entries.push({
       word: row.word,
-      phonetic: phonetic ?? kp?.uk,
-      phoneticUs: kp?.us,
+      phonetic: (phonetic ?? kp?.uk) || undefined,
+      phoneticUs: kp?.us || undefined,
       translation,
       definition: row.definition?.trim() || undefined,
       pos: row.pos || undefined,

@@ -5,3 +5,4 @@ scripts/.work/
 .env*
 docs/
 materials/
+public/audio/*-us.mp3
