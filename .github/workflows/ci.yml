@@ -12,7 +12,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          # 与开发环境锁定同一 minor，避免随行 npm 版本差异导致
+          # optional platform deps 的 lock 校验行为漂移（P5 教训）
+          node-version: 24.11.1
           cache: npm
       - run: npm ci
       - run: npm run lint
