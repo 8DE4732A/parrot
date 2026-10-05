@@ -43,8 +43,7 @@ export async function POST(req: Request) {
   const rows = await db
     .select()
     .from(cardProgress)
-    .where(eq(cardProgress.userId, user.id))
-    .then((all) => all.filter((r) => r.wordId === wordId));
+    .where(and(eq(cardProgress.userId, user.id), eq(cardProgress.wordId, wordId)));
   const existing = rows[0] ?? null;
 
   const { card, log } = reviewCard(
@@ -67,25 +66,29 @@ export async function POST(req: Request) {
   );
 
   const row = rowFromCard(card);
-  if (existing) {
-    await db
-      .update(cardProgress)
-      .set(row)
-      .where(and(eq(cardProgress.userId, user.id), eq(cardProgress.wordId, wordId)));
-  } else {
-    await db.insert(cardProgress).values({ userId: user.id, wordId, ...row });
-  }
-  await db.insert(reviewLogs).values({
-    userId: user.id,
-    wordId,
-    grade: grade as Grade,
-    state: log.state,
-    due: log.due,
-    stability: log.stability,
-    difficulty: log.difficulty,
-    elapsedDays: log.elapsed_days,
-    scheduledDays: log.scheduled_days,
-    source: body.source ?? "card",
+  // P0：FSRS 计算（纯函数）在事务外，两次写入必须原子提交——
+  // 中断会导致进度更新了但日志缺失（或反之），破坏 append-only 日志与状态的一致性
+  await db.transaction(async (tx) => {
+    if (existing) {
+      await tx
+        .update(cardProgress)
+        .set(row)
+        .where(and(eq(cardProgress.userId, user.id), eq(cardProgress.wordId, wordId)));
+    } else {
+      await tx.insert(cardProgress).values({ userId: user.id, wordId, ...row });
+    }
+    await tx.insert(reviewLogs).values({
+      userId: user.id,
+      wordId,
+      grade: grade as Grade,
+      state: log.state,
+      due: log.due,
+      stability: log.stability,
+      difficulty: log.difficulty,
+      elapsedDays: log.elapsed_days,
+      scheduledDays: log.scheduled_days,
+      source: body.source ?? "card",
+    });
   });
 
   return NextResponse.json({

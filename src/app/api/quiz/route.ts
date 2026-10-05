@@ -183,68 +183,72 @@ export async function POST(req: Request) {
   const results: { id: string; correct: boolean; correctAnswer: string; hint?: string }[] = [];
   const now = new Date();
 
-  for (const a of answers) {
-    const w = wordMap.get(a.wordId);
-    if (!w) continue;
-    const normalize = (s: string) => s.trim().toLowerCase();
-    let correct = false;
-    let correctAnswer = "";
-    let hint: string | undefined;
+  // 全部判分写库原子提交（P0 同 review 路由）：quiz_records / card_progress /
+  // review_logs 三写并发场景下中断会留下半套数据，append-only 日志失去意义
+  await db.transaction(async (tx) => {
+    for (const a of answers) {
+      const w = wordMap.get(a.wordId);
+      if (!w) continue;
+      const normalize = (s: string) => s.trim().toLowerCase();
+      let correct = false;
+      let correctAnswer = "";
+      let hint: string | undefined;
 
-    if (a.type === "choice") {
-      correctAnswer = w.translation.split("；")[0];
-      correct = normalize(a.answer) === normalize(correctAnswer);
-    } else {
-      // spell / cloze：忽略大小写；inflections 命中视为正确；编辑距离 1 判错但提示
-      const forms = new Set(
-        [
-          w.word,
-          ...(Object.values((w.inflections as Record<string, string> | null) ?? {}) as string[]),
-        ].map(normalize)
-      );
-      const given = normalize(a.answer);
-      correct = forms.has(given);
-      correctAnswer = w.word;
-      hint =
-        !correct && [...forms].some((f) => editDistanceWithin1(f, given))
-          ? "差一个字母"
-          : undefined;
-    }
-
-    results.push({ id: a.id, correct, correctAnswer, hint });
-
-    await db.insert(quizRecords).values({
-      userId: user.id,
-      wordId: a.wordId,
-      type: a.type,
-      question: { id: a.id, answer: a.answer },
-      answer: a.answer,
-      correct,
-      durationMs: a.durationMs,
-    });
-
-    // 答错：due 拉回今天 + review_logs
-    if (!correct) {
-      const cp = await db
-        .select()
-        .from(cardProgress)
-        .where(and(eq(cardProgress.userId, user.id), eq(cardProgress.wordId, a.wordId)));
-      if (cp[0]) {
-        await db
-          .update(cardProgress)
-          .set({ due: now, state: 3 }) // Relearning
-          .where(and(eq(cardProgress.userId, user.id), eq(cardProgress.wordId, a.wordId)));
+      if (a.type === "choice") {
+        correctAnswer = w.translation.split("；")[0];
+        correct = normalize(a.answer) === normalize(correctAnswer);
+      } else {
+        // spell / cloze：忽略大小写；inflections 命中视为正确；编辑距离 1 判错但提示
+        const forms = new Set(
+          [
+            w.word,
+            ...(Object.values((w.inflections as Record<string, string> | null) ?? {}) as string[]),
+          ].map(normalize)
+        );
+        const given = normalize(a.answer);
+        correct = forms.has(given);
+        correctAnswer = w.word;
+        hint =
+          !correct && [...forms].some((f) => editDistanceWithin1(f, given))
+            ? "差一个字母"
+            : undefined;
       }
-      await db.insert(reviewLogs).values({
+
+      results.push({ id: a.id, correct, correctAnswer, hint });
+
+      await tx.insert(quizRecords).values({
         userId: user.id,
         wordId: a.wordId,
-        grade: 1, // Again
-        state: cp[0]?.state ?? 0,
-        reviewedAt: now,
-        source: `quiz_${a.type}`,
+        type: a.type,
+        question: { id: a.id, answer: a.answer },
+        answer: a.answer,
+        correct,
+        durationMs: a.durationMs,
       });
+
+      // 答错：due 拉回今天 + review_logs
+      if (!correct) {
+        const cp = await tx
+          .select()
+          .from(cardProgress)
+          .where(and(eq(cardProgress.userId, user.id), eq(cardProgress.wordId, a.wordId)));
+        if (cp[0]) {
+          await tx
+            .update(cardProgress)
+            .set({ due: now, state: 3 }) // Relearning
+            .where(and(eq(cardProgress.userId, user.id), eq(cardProgress.wordId, a.wordId)));
+        }
+        await tx.insert(reviewLogs).values({
+          userId: user.id,
+          wordId: a.wordId,
+          grade: 1, // Again
+          state: cp[0]?.state ?? 0,
+          reviewedAt: now,
+          source: `quiz_${a.type}`,
+        });
+      }
     }
-  }
+  });
 
   return NextResponse.json({
     results,

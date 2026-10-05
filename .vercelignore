@@ -1,8 +1,8 @@
 # Vercel 构建只需要应用代码；素材流水线原始数据与本地库不上传
+# 音频经 jsDelivr @audio 分支分发，不部署（见 src/lib/speak.ts）
 scripts/.work/
 .pglite/
 :memory:/
 .env*
 docs/
 materials/
-public/audio/*-us.mp3

@@ -50,3 +50,4 @@ materials/ielts/.explanations-failed.json
 
 # 防御：PGlite 误把 :memory: 当路径的产物
 :memory:/
+public/audio/
