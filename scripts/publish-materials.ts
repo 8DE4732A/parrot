@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { drizzle } from "drizzle-orm/pglite";
 import { and, eq, inArray } from "drizzle-orm";
+import { sql as sqlArg } from "drizzle-orm";
 import { PGlite } from "@electric-sql/pglite";
 
 import { validatePackage } from "../materials/schema";
@@ -114,12 +115,13 @@ async function main() {
   const existingAll = await db.select({ id: words.id, word: words.word }).from(words);
   for (const r of existingAll) wordIdMap.set(r.word.toLowerCase(), r.id);
 
-  const toInsert = wordEntries.filter((w) => !wordIdMap.has(w.word.toLowerCase()));
   const toUpdate = wordEntries.filter((w) => wordIdMap.has(w.word.toLowerCase()));
 
   const CHUNK = 500;
-  for (let i = 0; i < toInsert.length; i += CHUNK) {
-    const chunk = toInsert.slice(i, i + CHUNK);
+  // words 全量 chunked upsert（INSERT ... ON CONFLICT (word) DO UPDATE）：
+  // 逐条 UPDATE 经 Neon HTTP 网络脆弱（补齐 2699/3333 美音标的教训），批量一次到位
+  for (let i = 0; i < wordEntries.length; i += CHUNK) {
+    const chunk = wordEntries.slice(i, i + CHUNK);
     const inserted = await db
       .insert(words)
       .values(
@@ -136,29 +138,26 @@ async function main() {
           source: w.source,
         }))
       )
+      .onConflictDoUpdate({
+        target: words.word,
+        set: {
+          phonetic: sqlArg`excluded.phonetic`,
+          phoneticUs: sqlArg`excluded.phonetic_us`,
+          translation: sqlArg`excluded.translation`,
+          definition: sqlArg`excluded.definition`,
+          pos: sqlArg`excluded.pos`,
+          bnc: sqlArg`excluded.bnc`,
+          frq: sqlArg`excluded.frq`,
+          inflections: sqlArg`excluded.inflections`,
+          source: sqlArg`excluded.source`,
+        },
+      })
       .returning({ id: words.id, word: words.word });
     for (const r of inserted) wordIdMap.set(r.word.toLowerCase(), r.id);
-    stats.wordsInserted += inserted.length;
-    console.log(`  words 插入进度 ${Math.min(i + CHUNK, toInsert.length)}/${toInsert.length}`);
+    console.log(`  words upsert 进度 ${Math.min(i + CHUNK, wordEntries.length)}/${wordEntries.length}`);
   }
-  for (const w of toUpdate) {
-    await db
-      .update(words)
-      .set({
-        phonetic: w.phonetic,
-        phoneticUs: w.phoneticUs,
-        translation: w.translation,
-        definition: w.definition,
-        pos: w.pos,
-        bnc: w.frequency?.bnc,
-        frq: w.frequency?.frq,
-        inflections: w.inflections,
-        source: w.source,
-      })
-      .where(eq(words.id, wordIdMap.get(w.word.toLowerCase())!));
-    stats.wordsUpdated++;
-  }
-  console.log(`  words 更新 ${toUpdate.length}`);
+  stats.wordsUpdated = toUpdate.length;
+  stats.wordsInserted = wordEntries.length - toUpdate.length;
 
   // 3. deck_words 重建
   await db.delete(deckWords).where(eq(deckWords.deckId, deckId));
